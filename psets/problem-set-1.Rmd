@@ -1,0 +1,187 @@
+---
+title: "Problem Set 1"
+author: "GK Fragiadakis"
+date: "September 18, 2015"
+output: html_document
+---
+
+Here are the proposed solutions for the first problem set from Statistics 216.  
+
+## Problem 1
+
+Three applications of *unsupervised learning*:
+
+1. Looking for subtypes of tumor types from gene expression analysis
+2. Determining potential personality "types" based on entries in dating profiles (when types are not pre-specified)
+3. Determining airport hubs based on flight routes
+
+Three applications of *regression*:
+
+1. Predicting surgical recovery time from blood sample measurements
+2. Predicting health care cost per individual based on life-style factors
+3. Predicting a company's expected revenue based on personel factors (job satistifaction, amenities offered, etc)
+
+Three applications of *classification*:
+
+1. Predicting high achieving college students v. low achieving students based on childhood home characteristics
+2. Predicting 5 year survival based on tumor size
+3. Predicting country of origin based on diet
+
+## Problem 2
+
+Explain whether each scenario below is a regression, classification or unsupervised
+learning problem, and indicate for each supervised learning scenario whether we are
+more interested in inference or prediction. Finally, provide n and p.
+
+(a) Stanford received 42,000 undergraduate applications in the year 2014. The application
+includes the following data for each applicant: age, high school GPA,
+scores in the SAT Critical Reading, SAT Math and SAT Writing exams, whether
+they are domestic or international and whether they are transferring students or
+not. The university also knows which of these applicants have been admitted and
+wishes to understand how the different factors affect admission chances.
+
+* Classification
+* Inference
+* n = 42,000
+* p = 8
+
+(b) An online retailer wants to launch several different targeted ad campaigns and
+is interested in identifying distinct customer subtypes based on 1.5 million customers’
+past purchase histories. For each of 500,000 products sold, the company
+maintains a count of how often that product has been purchased by each customer
+in the past.
+
+* Unsupervised
+* Inference
+* n = 1.5 million
+* p = 500,000
+
+(c) A book publisher would like to infer which factors turn a book into a best-seller.
+For each of the 4,000 books it has published, it knows whether the book published
+was considered a best-seller, a good sell, a bad sell, or a horrible sell. Also, for
+each book, it knows the number of books by the same author sold in the past,
+the book’s theme, the book’s length, whether it got mostly good or bad reviews,
+and the target audience.
+
+* Classification
+* Inference
+* n = 4,000
+* p = 5
+
+(d) Scientists are very concerned with determining by how much global temperatures
+will rise in the coming years. They have annual data since 1900 on the world’s
+temperature, the carbon, nitrous oxide and methane levels in the atmosphere, the
+world’s GDP and a size estimate for Earth’s polar ice caps.
+
+* Regression
+* Prediction
+* n = 115
+* p = 6
+
+## Problem 3
+
+a. *Advantages of a flexible model*: A flexible model will have a better fit of the training data, and will present a better model should the data have a reasonably complicated f.  However, that model is more at risk of overfitting, and will be harder to interpret than a less flexible model.  
+
+b. *Flexibly is better*
+
+* Large n, small p
+* relationship between predictors and response is more complicated, non-linear, etc. 
+* low noise
+
+c. *Flexibility is worse*
+
+* Large p, small n
+* relationship between predictors and response is simple, linear, etc. 
+* noisy (flexible models tend to overfit to the noise)
+
+## Problem 4
+
+a. Load the **MASS** library to access the **Boston** data set:
+
+```{r load data}
+library(MASS)
+```
+
+
+The `Boston` data has `r nrow(Boston)` rows and `r ncol(Boston)` columns.  
+```{r attach}
+attach(Boston)
+```
+b. Complete set of plots
+
+``` {r All plots, echo=FALSE}
+pairs(Boston)
+```
+
+We notice a clear relationship between the home value and % lower status population.  We see some areas with no crime, and those are zoned for larger lots.  
+
+c. Plots of crime rate versus other predictors: 
+
+```{r crime_relationships}
+par(mfrow = c(2,3))
+for (i in 2:ncol(Boston)){
+  plot(Boston[ ,i], crim, xlab = colnames(Boston)[i])
+}
+
+```
+
+We see crime is associated with access to the highway, no tract bounds river, high property tax rate, high pupil to teacher ratio.  
+
+d. Crime rates, tax rates, pupil teacher ratios:
+
+```{r distributions}
+par(mfrow=c(1,1))
+hist(crim)
+hist(tax)
+hist(ptratio)
+```
+
+e. `r length(chas) - sum(chas)` suburbs bound the Charles River.  
+
+f. The median pupil-teacher ratio is `r median(ptratio)`.  
+
+g. The lowest median income `age` is `r Boston[Boston$age == min(age), ]`.  They have a very high Black population, low crime, fairly average on other things.  
+
+h. There are `r sum(Boston$rm > 7)` homes with more than 7 rooms.  `r sum(Boston$rm > 7)` with more than 8.  
+
+## Problem 5
+
+Predicting crime rate based on the remaining predictors: 
+
+a. Create a train and test set: 
+
+```{r create_train_test}
+total_suburbs <- nrow(Boston)
+sample_size <- nrow(Boston)/2
+train_set <- sample(total_suburbs, sample_size, replace = F)
+
+Boston_train <- Boston[train_set, ]
+Boston_test <- Boston[-c(train_set), ]
+
+```
+
+b. Fit a linear model on the training data using least squares and report training and test error. 
+
+Here is our model:
+
+``` {r linear_model}
+fit <- lm(crim ~ ., Boston_train)
+summary(fit)
+```
+
+We can calculate training error in two ways: 
+
+``` {r training_error}
+y_est_train <- predict(fit, Boston_train)
+mean((y_est_train - Boston_train$crim)^2)
+mean(fit$residuals^2)
+```
+
+Similarly we compute the test error: 
+
+``` {r test_error}
+y_est_test <- predict(fit, Boston_test)
+mean((y_est_test - Boston_test$crim)^2)
+```
+
+c. Significant predictors are index to accessibility of radial highways, median value of owner occupied homes, distance to employment centers, and average number of rooms per dwelling.  Our measure of fit (our R_squared) was 0.45.  
